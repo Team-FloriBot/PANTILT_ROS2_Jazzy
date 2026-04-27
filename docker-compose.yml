@@ -1,0 +1,18 @@
+services:
+  pantilt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pantilt_ros2_jazzy
+    network_mode: host
+    ipc: host
+    privileged: true
+    volumes:
+      - ./src:/ros2_ws/src
+      - /dev:/dev
+    environment:
+      - ROS_DOMAIN_ID=0
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    stdin_open: true
+    tty: true
+    command: bash
