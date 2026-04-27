@@ -26,4 +26,4 @@ RUN source /opt/ros/jazzy/setup.bash && \
 RUN echo "source /opt/ros/jazzy/setup.bash" >> /root/.bashrc && \
     echo "source /ros2_ws/install/setup.bash" >> /root/.bashrc
 
-CMD ["bash"]
+CMD ["bash", "-c", "source /opt/ros/jazzy/setup.bash && source /ros2_ws/install/setup.bash && ros2 launch aim_and_fire system.launch.py"]
