@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y \
     python3-colcon-common-extensions \
     python3-pip \
     git \
+    libusb-1.0-0 \
+    udev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /ros2_ws
