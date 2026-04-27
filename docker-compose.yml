@@ -1,7 +1,11 @@
 services:
   pantilt:
-    build: .
-    container_name: pantilt_ros2
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: pantilt_ros2_jazzy
+
     network_mode: host
     ipc: host
     privileged: true
@@ -13,5 +17,7 @@ services:
     environment:
       - ROS_DOMAIN_ID=0
 
-    tty: true
     stdin_open: true
+    tty: true
+
+    command: bash
