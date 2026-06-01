@@ -17,12 +17,15 @@ class AimAndFireNode(Node):
         # Parameter
         self.declare_parameter('offset_x', 0.0)
         self.declare_parameter('offset_y', 0.0)
-        self.declare_parameter('offset_z', 0.225)
+        self.declare_parameter('offset_z', 0.545) #Höhe vom Boden zur Neigungsachse
 
         self.declare_parameter('pan_joint', 'ptu_pan')
         self.declare_parameter('tilt_joint', 'ptu_tilt')
 
         self.declare_parameter('tolerance_deg', 0.3)
+        self.declare_parameter('tilt_offset_deg', 14.26)
+        
+        self.declare_parameter('speed_deg_s', 20.0) # 20 Grad pro Sekunde als  Startwert 
 
         self.offset_x = self.get_parameter('offset_x').value
         self.offset_y = self.get_parameter('offset_y').value
@@ -33,6 +36,15 @@ class AimAndFireNode(Node):
 
         self.tolerance = math.radians(
             self.get_parameter('tolerance_deg').value
+        )
+        
+        # physischer Düsenversatz
+        self.declare_parameter('tool_offset_z', 0.16) # 16cm Versatz nach oben
+        self.tool_offset_z = self.get_parameter('tool_offset_z').value
+        
+        # Umrechnung des Offsets in Radiant
+        self.tilt_offset = math.radians(
+            self.get_parameter('tilt_offset_deg').value
         )
 
         # Zustand
@@ -55,30 +67,49 @@ class AimAndFireNode(Node):
             JointState, '/ptu/state', self.state_callback, 10)
 
     def target_callback(self, msg: Point):
-        # Koordinaten transformieren
+        # Aktuelle Wunschgeschwindigkeit live auslesen und in Radiant umrechnen
+        speed_rad_s = math.radians(self.get_parameter('speed_deg_s').value)
+        
+        # Koordinaten relativ zur PTU-Achse berechnen
         x = -(msg.x - self.offset_x)
         y = msg.y - self.offset_y
         z = msg.z - self.offset_z
-
-        # Winkel berechnen
-        pan = math.atan2(x, y)
+        
+        # Horizontale Distanz und direkte Sichtlinie (Hypotenuse) zum Ziel
         horizontal = math.hypot(x, y)
-        tilt = math.atan2(z, horizontal)
+        R = math.hypot(horizontal, z) # Absolute Distanz von Achse zu Ziel
+
+        # Sicherheitsabfrage: Ziel muss weiter weg sein als Düsenversatz
+        if R > self.tool_offset_z:
+            # Winkel zum Ziel aus Sicht der Rotationsachse
+            beta = math.atan2(z, horizontal)
+            
+            # Korrekturwinkel für den Parallaxenfehler (Düse sitzt höher, also muss PTU weiter nach unten zielen)
+            alpha = math.asin(self.tool_offset_z / R)
+            
+            # Gesamtwinkel = Basiswinkel - Parallaxenkorrektur + Getriebekorrektur
+            tilt = beta - alpha + self.tilt_offset
+            pan = math.atan2(x, y)
+        else:
+            self.get_logger().warn("Ziel ist zu nah an der PTU!")
+            return
 
         self.target_pan = pan
         self.target_tilt = tilt
         self.has_fired = False
-
+        
+        # Befehl an PTU senden
         cmd = JointState()
         cmd.header.stamp = self.get_clock().now().to_msg()
         cmd.name = [self.pan_joint, self.tilt_joint]
         cmd.position = [pan, tilt]
+        cmd.velocity = [speed_rad_s, speed_rad_s] # Geschwindigkeit für beide Achsen an Treiber
 
         self.cmd_pub.publish(cmd)
 
         self.get_logger().info(
             f'Ziel empfangen → pan={math.degrees(pan):.2f}°, '
-            f'tilt={math.degrees(tilt):.2f}°'
+            f'tilt={math.degrees(tilt):.2f}° (inkl. Offset)'
         )
 
     def state_callback(self, msg: JointState):
