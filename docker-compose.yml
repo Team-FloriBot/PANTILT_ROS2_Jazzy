@@ -3,7 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0" # Mappt den Host-Port in den Container
     container_name: pantilt_ros2_jazzy
     network_mode: host
     ipc: host
