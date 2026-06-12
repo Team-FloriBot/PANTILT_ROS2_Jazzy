@@ -25,7 +25,8 @@ class AimAndFireNode(Node):
         self.declare_parameter('tolerance_deg', 0.3)
         self.declare_parameter('tilt_offset_deg', 14.26)
         
-        self.declare_parameter('speed_deg_s', 20.0) # 20 Grad pro Sekunde als  Startwert 
+        self.declare_parameter('speed_deg_s', 15.0) # 15 Grad pro Sekunde als  Startwert 
+        self.declare_parameter('water_speed_m_s', 15.0) # Geschwindigkeit des Wasserstrahls
 
         self.offset_x = self.get_parameter('offset_x').value
         self.offset_y = self.get_parameter('offset_y').value
@@ -39,7 +40,7 @@ class AimAndFireNode(Node):
         )
         
         # physischer Düsenversatz
-        self.declare_parameter('tool_offset_z', 0.16) # 16cm Versatz nach oben
+        self.declare_parameter('tool_offset_z', 0.045) # 45mm Versatz nach oben
         self.tool_offset_z = self.get_parameter('tool_offset_z').value
         
         # Umrechnung des Offsets in Radiant
@@ -87,8 +88,21 @@ class AimAndFireNode(Node):
             # Korrekturwinkel für den Parallaxenfehler (Düse sitzt höher, also muss PTU weiter nach unten zielen)
             alpha = math.asin(self.tool_offset_z / R)
             
-            # Gesamtwinkel = Basiswinkel - Parallaxenkorrektur + Getriebekorrektur
-            tilt = beta - alpha + self.tilt_offset
+            # Ballistische Kompensation 
+            v_water = self.get_parameter('water_speed_m_s').value
+            g = 9.81 # Erdbeschleunigung in m/s2 
+            
+            # Flugzeit t = Distanz / Geschwindigkeit
+            t = R / v_water
+            
+            # Fallstrecke des Wassers in Metern (freier Fall)
+            drop = 0.5 * g * (t ** 2)
+            
+            # Notwendiger Winkel nach oben, um den Fall auszugleichen
+            drop_angle = math.atan2(drop, R)
+            
+            # Gesamtwinkel = Basiswinkel - Parallaxenkorrektur + Getriebekorrektur + Ballistik
+            tilt = beta - alpha + self.tilt_offset + drop_angle
             pan = math.atan2(x, y)
         else:
             self.get_logger().warn("Ziel ist zu nah an der PTU!")

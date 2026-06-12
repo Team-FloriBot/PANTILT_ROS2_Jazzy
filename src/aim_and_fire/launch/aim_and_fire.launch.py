@@ -13,7 +13,9 @@ def generate_launch_description():
                 {'tolerance_deg': 0.3},
                 {'offset_z': 0.545},
                 {'tilt_offset_deg': 14.26}, #Ausgleich des Neigungswinkels wegen Verschiebung der Nullstellung
-                {'speed_deg_s': 20.0} # Begrenzte Geschwindigkeit wegen Spritzpistole
+                {'tool_offset_z': 0.045},
+                {'speed_deg_s': 15.0}, # Begrenzte Geschwindigkeit wegen Spritzpistole
+                {'water_speed_m_s': 15.0} # Geschwindigkeit des Wasserstrahls
             ]
         )
     ])
