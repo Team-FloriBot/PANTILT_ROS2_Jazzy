@@ -22,6 +22,7 @@ setup(
         'console_scripts': [
             'aim_and_fire = aim_and_fire.aim_and_fire_node:main',
             'ptu_reference = aim_and_fire.ptu_reference_node:main',
+            'trigger_node = aim_and_fire.trigger_node:main',
         ],
     },
 )

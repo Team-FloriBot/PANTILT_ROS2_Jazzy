@@ -25,8 +25,8 @@ class AimAndFireNode(Node):
         self.declare_parameter('tolerance_deg', 0.3)
         self.declare_parameter('tilt_offset_deg', 14.26)
         
-        self.declare_parameter('speed_deg_s', 15.0) # 15 Grad pro Sekunde als  Startwert 
-        self.declare_parameter('water_speed_m_s', 15.0) # Geschwindigkeit des Wasserstrahls
+        self.declare_parameter('speed_deg_s', 13.0) # 15 Grad pro Sekunde als  Startwert 
+        self.declare_parameter('water_speed_m_s', 11.8) # Geschwindigkeit des Wasserstrahls
 
         self.offset_x = self.get_parameter('offset_x').value
         self.offset_y = self.get_parameter('offset_y').value
